@@ -1,4 +1,5 @@
 from random import randint
+from dataclasses import dataclass
 
 
 def if_alive(my_func):
@@ -10,19 +11,46 @@ def if_alive(my_func):
     return wrapper
 
 
-class Dragon(object):
+@dataclass(frozen=True)
+class Point:
+    x: int = 0
+    y: int = 0
+
+    def __post_init__(self) ->None:
+        if self.x < 0:
+            raise ValueError('x cannot be negative')
+        if self.y < 0:
+            raise ValueError('y cannot be negative')
+
+
+class Movable:
+    @if_alive
+    def set_position(self, position: Point = Point()) -> None:
+        self.position: Point = position
+
+    def get_position(self) -> Point:
+        return self.position
+
+    @if_alive
+    def move(self, left: int = 0, right: int = 0, down: int = 0, up: int = 0) -> None:
+        current_position = self.get_position()
+        x: int = current_position.x + right - left
+        y: int = current_position.y + down - up
+        self.set_position(Point(x, y))
+
+
+class Dragon(Movable):
     TEXTURE = r'img/dragon/alive.png'
     HEALTH_MIN, HEALTH_MAX = 50, 120
     GOLD_MIN, GOLD_MAX = 1, 100
 
-    def __init__(self, name='smok', pos_x=0, pos_y=0):
+    def __init__(self, name='smok', position: Point = Point()):
         self.name = name
-        self.pos_x = pos_x
-        self.pos_y = pos_y
         self.health = randint(self.HEALTH_MIN, self.HEALTH_MAX)
         self.texture = self.TEXTURE
         self.life_status = 'LIVE'
         self.gold = randint(self.GOLD_MIN, self.GOLD_MAX)
+        self.set_position(position)
 
     def is_alive(self) -> bool:
         if self.life_status == 'LIVE':
@@ -41,18 +69,6 @@ class Dragon(object):
         print('status_update ', self.life_status)
 
     @if_alive
-    def set_position(self, pos_x: int, pos_y: int) -> None:
-        self.pos_x = pos_x
-        self.pos_y = pos_y
-
-    # set_position = is_alive(set_position)
-
-    @if_alive
-    def move(self, left=0, right=0, down=0, up=0) -> None:
-        self.pos_x += right - left
-        self.pos_y += down - up
-
-    @if_alive
     def take_damage(self, damage: int):
         self.health -= damage
         self.update_status()
@@ -64,9 +80,9 @@ class Dragon(object):
 
 
 if __name__ == '__main__':
-    dr = Dragon(name= 'Wawelski',pos_x=20, pos_y=50)
-    print(dr.name, dr.life_status, dr.health, dr.pos_x, dr.pos_y)
-    dr.set_position(pos_x=30, pos_y= 120)
+    dr = Dragon(name= 'Wawelski', position=Point(20, 50))
+    print(dr.name, dr.life_status, dr.health, dr.position)
+    dr.set_position(position=Point(30, 120))
     dr.move(left=20, right=0, down=30, up=0)
     dr.take_damage(damage=15)
     dr.take_damage(damage=15)
@@ -74,4 +90,4 @@ if __name__ == '__main__':
     dr.take_damage(damage=150)
     dr.take_damage(damage=15)
     dr.take_damage(damage=15)
-    print(dr.name, dr.life_status,  dr.health, dr.pos_x, dr.pos_y)
+    print(dr.name, dr.life_status,  dr.health, dr.position)
